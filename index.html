@@ -52,8 +52,8 @@
     <script type="text/babel">
         const { useState } = React;
 
-        // 👇 這裡就是您的專屬後端鑰匙 (已填入)
-        const API_URL = "https://script.google.com/macros/s/AKfycbz6Dq8N_05G-CMyJGulirWr3BY2O9pcz6I_4v3LbP8nUIwO7_FwkwTuAiK1E4AS_aLE/exec";
+        // 👇 這裡就是您的新 API 鑰匙 (已填入完成) 👇
+        const API_URL = "https://script.google.com/macros/s/AKfycbwe3_YJtWJQX5flnNBJ_wX2x3tGTPNXpKm0RZSEO9rgIYrGvYtPXiyTaxOPNOyuShGB/exec";
 
         const UI_OPTIONS = {
             tradeCount: [
@@ -131,11 +131,10 @@
                     setStatus("error"); setErrorMsg("請勾選同意聲明"); return;
                 }
 
-                // 👇 修改重點：改用 fetch 呼叫您的新 API
+                // 👇 使用新的 API 進行傳送
                 fetch(API_URL, {
                     method: "POST",
-                    body: JSON.stringify(formData),
-                    // 不設定 content-type 以避免 preflight (CORS) 問題，後端會自動解析
+                    body: JSON.stringify(formData)
                 })
                 .then(response => response.json())
                 .then(res => {
@@ -148,7 +147,7 @@
                 })
                 .catch(err => {
                     setStatus("error");
-                    setErrorMsg("連線失敗：" + err);
+                    setErrorMsg("連線失敗，請檢查網路或稍後再試。(" + err + ")");
                 });
             };
 
@@ -372,10 +371,13 @@
     <script>
         const canvas = document.getElementById('neuronCanvas');
         const ctx = canvas.getContext('2d');
+        // 設定畫布大小為全螢幕
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
         let particlesArray;
+
+        // V26 參數微調 (戰情室專用)
         const numberOfParticles = (canvas.width * canvas.height) / 9000;
         const connectionDistance = 160;
         const particleSpeed = 1.5;
