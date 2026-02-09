@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <title>【期貨AI數據戰情室】講座報名表</title>
+    <meta property="og:title" content="【期貨AI數據戰情室】講座報名表" />
+    <meta property="og:description" content="量化交易 / 特徵提取 / 風控思維 - 立即報名分享會 (由楊恭臨主講)" />
+    <meta property="og:type" content="website" />
+    
+    <script>
+      window.onerror = function(msg, url, line) {
+        var d = document.getElementById('debug-box');
+        if(d) { d.style.display = 'block'; d.innerHTML += "⚠️ " + msg + "<br>"; }
+      };
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+        .animate-scan { animation: scan 2s linear infinite; }
+        .break-keep { word-break: keep-all; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #05070a; }
+        ::-webkit-scrollbar-thumb { background: #22d3ee30; border-radius: 10px; }
+        #debug-box { display: none; background: white; color: red; padding: 10px; position: fixed; top: 0; left: 0; width: 100%; z-index: 9999; }
+        
+        /* 粒子畫布樣式：確保在最底層且不阻擋點擊 */
+        #neuronCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0; 
+            pointer-events: none; /* 關鍵：讓滑鼠可以穿透畫布點擊表單 */
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body class="bg-[#05070a] text-gray-100 font-sans antialiased">
+
+    <canvas id="neuronCanvas"></canvas>
+
+    <div id="debug-box"></div>
+    <div id="root" class="relative z-10"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        const UI_OPTIONS = {
+            tradeCount: [
+                { val: "trade_1", label: "是的，我於任一券商近半年期權月均交易口數達 10 口以上" },
+                { val: "trade_2", label: "目前尚未達到，但對金融科技有強烈學習熱誠" }
+            ],
+            interests: [
+                { val: "int_1", label: "AI 特徵提取邏輯" },
+                { val: "int_2", label: "動能雷達應用" },
+                { val: "int_3", label: "走勢斜率與盤整過濾技術" },
+                { val: "int_4", label: "低延遲金融數據視覺化看板打造" }
+            ],
+            computer: [
+                { val: "comp_1", label: "可以，我會自備電腦與網路" },
+                { val: "comp_2", label: "不方便，需再與您討論" }
+            ]
+        };
+
+        const Icon = ({ path, color = "currentColor", size = 24, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{path}</svg>
+        );
+
+        const Icons = {
+            Cpu: (props) => <Icon {...props} path={<><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M15 20v2M2 15h2M2 9h2M20 15h2M20 9h2M9 2v2M9 20v2"/></>} />,
+            Activity: (props) => <Icon {...props} path={<polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />} />,
+            User: (props) => <Icon {...props} path={<><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>} />,
+            Mic: (props) => <Icon {...props} path={<><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></>} />,
+            Book: (props) => <Icon {...props} path={<><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></>} />,
+            CheckCircle: (props) => <Icon {...props} path={<><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>} />,
+            PlayCircle: (props) => <Icon {...props} path={<><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></>} />,
+            Shield: (props) => <Icon {...props} path={<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />} />,
+            Laptop: (props) => <Icon {...props} path={<><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="2" y1="20" x2="22" y2="20"/></>} />
+        };
+
+        const App = () => {
+            const [status, setStatus] = useState("idle");
+            const [errorMsg, setErrorMsg] = useState("");
+            
+            const [formData, setFormData] = useState({
+                name: "", phone: "", software: "",
+                tradeCount: "", interests: [], computer: "", agree: ""
+            });
+
+            const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+            
+            const handleInterestChange = (val) => {
+                setFormData(prev => {
+                    const newInterests = prev.interests.includes(val) 
+                        ? prev.interests.filter(i => i !== val) 
+                        : [...prev.interests, val];
+                    return { ...prev, interests: newInterests };
+                });
+            };
+
+            const handleAgreeChange = (e) => setFormData({ ...formData, agree: e.target.checked ? "agree_1" : "" });
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                setStatus("submitting");
+                setErrorMsg("");
+
+                if (!formData.name || !formData.phone || !formData.software) {
+                    setStatus("error"); setErrorMsg("請填寫完整基本資料"); window.scrollTo(0, 0); return;
+                }
+                if (!formData.tradeCount) {
+                    setStatus("error"); setErrorMsg("請選擇交易經驗"); return;
+                }
+                if (formData.interests.length === 0) {
+                    setStatus("error"); setErrorMsg("請至少選擇一項主題"); return;
+                }
+                if (!formData.computer) {
+                    setStatus("error"); setErrorMsg("請確認自備電腦"); return;
+                }
+                if (!formData.agree) {
+                    setStatus("error"); setErrorMsg("請勾選同意聲明"); return;
+                }
+
+                google.script.run
+                    .withSuccessHandler((res) => {
+                        if (res.success) setStatus("success");
+                        else { setStatus("error"); setErrorMsg(res.msg); }
+                    })
+                    .withFailureHandler((err) => { setStatus("error"); setErrorMsg("連線失敗：" + err); })
+                    .processFormSubmission(formData);
+            };
+
+            const handleImageError = (e) => {
+                e.currentTarget.onerror = null; 
+                e.currentTarget.src = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://youtube.com/@FuturesAI_Live?sub_confirmation=1';
+            };
+
+            if (status === "success") {
+                return (
+                    <div className="min-h-screen bg-transparent text-white flex items-center justify-center p-4">
+                        <div className="max-w-md w-full bg-[#0d1117]/90 border-2 border-cyan-400 rounded-3xl p-10 text-center shadow-[0_0_50px_rgba(6,182,212,0.4)] animate-fade-in backdrop-blur-sm">
+                            <Icons.CheckCircle size={80} color="#22d3ee" className="mx-auto mb-6" />
+                            <h2 className="text-3xl font-black mb-4 uppercase tracking-wider">報名傳輸完成</h2>
+                            <p className="text-gray-200 mb-10 text-lg">數據席位已保留，請留意後續聯絡訊息。</p>
+                            <button onClick={() => window.location.reload()} className="w-full py-5 bg-cyan-500 text-black text-xl font-black rounded-2xl shadow-lg transition-transform active:scale-95 hover:bg-cyan-400">
+                                返回首頁
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen pb-24 overflow-x-hidden selection:bg-cyan-500/30 text-left">
+                    
+                    <div className="relative z-10 max-w-4xl mx-auto px-4 pt-6 text-left">
+                        
+                        <header className="relative mb-8 rounded-3xl overflow-hidden border-2 border-cyan-500/50 bg-[#0d1117]/80 shadow-xl backdrop-blur-sm">
+                            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-cyan-500 via-white to-red-500 shadow-[0_0_15px_rgba(34,211,238,0.5)]"></div>
+                            <div className="p-6 md:p-12">
+                                <div className="flex items-center gap-2 text-cyan-400 font-black text-xs mb-4 tracking-[0.2em]">
+                                    <div className="w-2 h-2 bg-cyan-500 animate-pulse rounded-full"></div>
+                                    TRADING COPILOT / 量化交易系統
+                                </div>
+
+                                <h1 className="text-3xl md:text-5xl font-black text-white mb-6 leading-tight tracking-tighter break-keep">
+                                    【期貨AI數據戰情室】<br className="md:hidden"/>講座報名表
+                                </h1>
+
+                                <div className="space-y-6 mb-8 text-left">
+                                    <div className="flex items-start gap-4">
+                                        <div className="mt-1 p-1 bg-cyan-500/20 rounded shrink-0">
+                                            <Icons.Cpu size={24} color="#22d3ee" />
+                                        </div>
+                                        <p className="text-lg md:text-xl text-white font-bold leading-relaxed">
+                                            一位專注於金融科技與量化交易的創作者。帶你看<span className="text-cyan-400 underline decoration-2 underline-offset-4 font-black">數據特徵</span>，協助你在期貨市場建立客觀的風控思維。
+                                        </p>
+                                    </div>
+
+                                    <div className="bg-gradient-to-b from-[#1a1f26]/80 to-[#0d1117]/80 rounded-2xl border border-cyan-500/30 overflow-hidden shadow-2xl backdrop-blur-sm">
+                                        <div className="flex flex-col">
+                                            <div className="p-5 border-b border-white/5 flex flex-col gap-2 text-left">
+                                                <div className="flex items-center gap-2 text-cyan-400 text-[10px] font-black tracking-widest uppercase mb-1">
+                                                    <Icons.Mic size={14} color="#22d3ee" /> Lead Speaker / 主講人
+                                                </div>
+                                                <div className="text-2xl md:text-3xl font-black text-white tracking-wide min-h-[1.5em]">楊恭臨</div>
+                                            </div>
+                                            <div className="p-5 flex flex-col gap-2 bg-black/20 text-left">
+                                                <div className="flex items-center gap-2 text-red-400 text-[10px] font-black tracking-widest uppercase mb-1">
+                                                    <Icons.Book size={14} color="#f87171" /> Keynote Topic / 講座主題
+                                                </div>
+                                                <div className="text-xl md:text-2xl font-bold text-gray-100 leading-snug font-black italic">如何抓出期貨落後的關鍵資訊</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </header>
+
+                        <section className="mb-10 group text-left">
+                            <div className="bg-gradient-to-r from-[#0d1117]/90 via-[#161b22]/90 to-[#0d1117]/90 border-2 border-cyan-500/50 rounded-3xl overflow-hidden shadow-2xl transition-all hover:border-cyan-400 backdrop-blur-sm">
+                                <div className="flex flex-col md:flex-row items-center">
+                                    <div className="w-full md:w-1/3 p-8 flex flex-col items-center justify-center bg-black/40 border-b md:border-b-0 md:border-r border-white/10 relative overflow-hidden text-center">
+                                        <div className="relative group/qr cursor-pointer">
+                                            <div className="absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 border-cyan-400"></div>
+                                            <div className="absolute -top-2 -right-2 w-4 h-4 border-t-2 border-r-2 border-cyan-400"></div>
+                                            <div className="absolute -bottom-2 -left-2 w-4 h-4 border-b-2 border-l-2 border-cyan-400"></div>
+                                            <div className="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-cyan-400"></div>
+                                            <div className="absolute top-0 left-0 w-full h-1 bg-cyan-400/50 shadow-[0_0_10px_#22d3ee] animate-scan z-10 pointer-events-none"></div>
+                                            
+                                            <img src="期貨戰情室Qrcode_.png" alt="QR Code" className="w-32 h-32 md:w-40 md:h-40 grayscale group-hover/qr:grayscale-0 transition-all duration-500 rounded-lg shadow-2xl" onError={handleImageError} />
+                                        </div>
+                                        <div className="mt-4 flex items-center gap-2 text-cyan-400 font-black text-[10px] tracking-widest uppercase">
+                                            <Icons.Activity size={12} color="#22d3ee" className="animate-pulse" /> Live System Scan
+                                        </div>
+                                    </div>
+                                    <div className="w-full md:w-2/3 p-6 md:p-10 text-left">
+                                        <h3 className="text-xl md:text-2xl font-black text-white mb-4 leading-tight break-keep italic">
+                                            解鎖數據視野：我們先帶您看清 <span className="text-cyan-400 text-lg md:text-2xl font-black underline decoration-2 underline-offset-8">量化特徵實錄</span>
+                                        </h3>
+                                        <p className="text-gray-400 text-sm md:text-base mb-6 font-bold leading-relaxed">
+                                            建立對數據的客觀信任是邁向<span className="text-white underline decoration-cyan-500 font-black">金融科技</span>的第一步。您可以透過下方按鈕或掃描左側，預覽特徵如何在歷史行情中觀察多空動能強弱。
+                                        </p>
+                                        <a href="http://youtube.com/@FuturesAI_Live?sub_confirmation=1" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-3 bg-red-600 hover:bg-red-500 text-white font-black py-4 px-8 rounded-2xl transition-all shadow-lg active:scale-95 text-lg w-full md:w-auto justify-center">
+                                            <Icons.PlayCircle size={24} color="#fff" /> 點我進入預覽實錄
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <form onSubmit={handleSubmit} className="space-y-8 text-left">
+                            <section className="bg-[#0d1117]/90 border border-white/10 rounded-3xl p-6 md:p-10 shadow-lg text-left backdrop-blur-sm">
+                                <div className="flex items-center gap-3 mb-8 border-b border-cyan-500/20 pb-5 uppercase">
+                                    <Icons.User size={24} color="#22d3ee" /><h3 className="text-xl md:text-2xl font-black text-white tracking-widest">基本聯絡資料</h3>
+                                </div>
+                                <div className="space-y-6">
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-base font-black text-cyan-400 block ml-1 uppercase">您的姓名 *</label>
+                                            <input type="text" name="name" onChange={handleChange} placeholder="請輸入填寫者姓名" className="w-full h-14 bg-black border-2 border-gray-800 rounded-xl px-4 outline-none focus:border-cyan-400 text-white text-lg font-bold transition-all shadow-inner" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-base font-black text-cyan-400 block ml-1 uppercase">手機或 Line ID *</label>
+                                            <input type="text" name="phone" onChange={handleChange} placeholder="方便後續聯絡" className="w-full h-14 bg-black border-2 border-gray-800 rounded-xl px-4 outline-none focus:border-cyan-400 text-white text-lg font-bold transition-all shadow-inner" />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2 text-left">
+                                        <label className="text-base font-black text-cyan-400 block ml-1 uppercase">目前慣用的看盤軟體 *</label>
+                                        <input type="text" name="software" onChange={handleChange} placeholder="例如：三竹、XQ、TradingView..." className="w-full h-14 bg-black border-2 border-gray-800 rounded-xl px-4 outline-none focus:border-cyan-400 text-white text-lg font-bold transition-all shadow-inner" />
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section className="bg-[#0d1117]/90 border border-white/10 rounded-3xl p-6 md:p-10 shadow-lg text-left backdrop-blur-sm">
+                                <div className="flex items-center gap-3 mb-8 border-b border-red-500/20 pb-5 uppercase">
+                                    <Icons.Activity size={24} color="#f87171" /><h3 className="text-xl md:text-2xl font-black text-white tracking-widest uppercase break-keep leading-tight">交易經驗與主題</h3>
+                                </div>
+                                <div className="space-y-8">
+                                    <div className="space-y-4">
+                                        <p className="text-base font-black text-white bg-red-900/20 px-3 py-2 rounded-lg inline-block border-l-4 border-red-500 uppercase tracking-widest font-black">交易口數確認 *</p>
+                                        <div className="grid gap-3">
+                                            {UI_OPTIONS.tradeCount.map((opt) => (
+                                                <label key={opt.val} className="flex items-start gap-4 p-5 bg-black border-2 border-gray-800 rounded-2xl hover:border-red-500 cursor-pointer transition-all active:scale-[0.98]">
+                                                    <input type="radio" name="tradeCount" value={opt.val} checked={formData.tradeCount === opt.val} onChange={handleChange} className="mt-1 w-6 h-6 shrink-0 accent-red-500" />
+                                                    <span className="text-base font-bold text-gray-200 leading-snug">{opt.label}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <p className="text-base font-black text-white bg-cyan-900/20 px-3 py-2 rounded-lg inline-block border-l-4 border-cyan-500 uppercase font-black tracking-widest">感興趣主題 (可多選)</p>
+                                        <div className="grid gap-3">
+                                            {UI_OPTIONS.interests.map((topic) => (
+                                                <label key={topic.val} className="flex items-center gap-4 p-4 bg-black border-2 border-gray-800 rounded-xl hover:border-cyan-400 cursor-pointer transition-all">
+                                                    <input type="checkbox" checked={formData.interests.includes(topic.val)} onChange={() => handleInterestChange(topic.val)} className="w-6 h-6 shrink-0 accent-cyan-500" />
+                                                    <span className="text-base font-bold text-gray-200 leading-tight uppercase font-bold">{topic.label}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section className="bg-[#0d1117]/90 border border-white/10 rounded-3xl p-6 md:p-10 shadow-lg text-left backdrop-blur-sm">
+                                <div className="space-y-4">
+                                    <p className="text-base font-black text-white mb-2 tracking-wider">若報名成功，您是否能自備電腦參與？ *</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {UI_OPTIONS.computer.map(opt => (
+                                            <label key={opt.val} className="flex items-center gap-4 p-4 bg-black border-2 border-gray-800 rounded-2xl cursor-pointer hover:border-cyan-400">
+                                                <input type="radio" name="computer" value={opt.val} checked={formData.computer === opt.val} onChange={handleChange} className="w-6 h-6 shrink-0 accent-cyan-500" />
+                                                <span className="text-base font-bold text-gray-200 leading-tight tracking-wide">{opt.label}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            </section>
+
+                            {status === "error" && (
+                                <div className="bg-red-500/10 border border-red-500/50 text-red-400 p-4 rounded-xl text-center font-bold animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.2)]">
+                                    ⚠️ {errorMsg}
+                                </div>
+                            )}
+
+                            <div className="space-y-8 mt-12 text-left">
+                                <section className="bg-[#161b22]/90 border-2 border-cyan-500 rounded-3xl p-6 md:p-10 shadow-xl backdrop-blur-sm">
+                                    <h4 className="text-cyan-400 text-xl font-black mb-8 flex items-center gap-3 uppercase italic tracking-tighter"><Icons.Laptop size={28} color="#22d3ee" className="shrink-0" /> 分享會資訊</h4>
+                                    <div className="flex flex-col gap-6 font-bold">
+                                        <div className="p-6 bg-black/60 rounded-2xl border-l-8 border-cyan-500 text-left">
+                                            <span className="text-cyan-500 text-xs font-black block mb-2 uppercase tracking-widest">地點 Location</span>
+                                            <p className="text-white text-xl md:text-2xl leading-tight">台北市 (詳細地址將於報名成功後通知)</p>
+                                        </div>
+                                        <div className="p-6 bg-black/60 rounded-2xl border-l-8 border-cyan-500 text-left">
+                                            <span className="text-cyan-500 text-xs font-black block mb-2 uppercase tracking-widest">預計時段 Schedule</span>
+                                            <p className="text-white text-xl md:text-2xl leading-tight font-black italic uppercase">平日 09:30 - 11:00 (早盤盤中)</p>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <section className="bg-[#1a0a0a]/90 border-2 border-red-500 rounded-3xl p-6 md:p-10 shadow-xl text-left backdrop-blur-sm">
+                                    <div className="flex items-center gap-3 text-red-500 mb-8 border-b border-red-500/20 pb-4 uppercase">
+                                        <Icons.Shield size={28} color="#ef4444" className="shrink-0" /><h4 className="text-xl md:text-2xl font-black tracking-tight leading-tight break-keep">重要聲明與風險提示</h4>
+                                    </div>
+                                    <div className="bg-black/80 p-5 md:p-8 rounded-2xl text-sm md:text-base leading-relaxed text-gray-200 font-bold space-y-6 shadow-inner text-left tracking-wide">
+                                        <p>【公司資訊】華南期貨許可證照字號：112年金管期總字第007號。總公司：台北市民生東路四段54號3F之9 | 總機：02-2718-0000</p>
+                                        <p>【風險提示】期權交易具高槓桿風險，投資人需自行審慎評估，損益自負。本內容僅供學術交流，不代表任何投資建議。</p>
+                                        <p>【法律免責】數據顯示不應視為買賣依據。交易皆應量力而為，本人及華南期貨不承擔任何交易損失與法律責任。</p>
+                                    </div>
+                                    <div className="mt-8 text-left">
+                                        <label className="flex items-start gap-5 p-6 bg-red-600/10 border-2 border-red-500 rounded-2xl cursor-pointer hover:bg-red-600/20 transition-all active:scale-[0.98] shadow-md">
+                                            <input type="checkbox" checked={formData.agree === "agree_1"} onChange={handleAgreeChange} className="mt-1 w-8 h-8 shrink-0 accent-red-500" />
+                                            <span className="text-lg font-black text-white leading-tight">我已詳閱並同意上述聲明與風險提示</span>
+                                        </label>
+                                    </div>
+                                </section>
+                            </div>
+
+                            <div className="pt-8 pb-10">
+                                <button type="submit" disabled={status === "submitting"} className={`w-full h-20 md:h-24 rounded-3xl font-black text-2xl md:text-3xl tracking-widest transition-all active:scale-[0.96] shadow-[0_0_30px_rgba(220,38,38,0.4)] ${status === "submitting" ? 'bg-gray-700' : 'bg-gradient-to-r from-red-600 to-red-800 text-white border-b-4 border-red-900 uppercase italic'}`}>
+                                    {status === "submitting" ? "數據傳輸中..." : "立即提交報名"}
+                                </button>
+                                <p className="text-center text-gray-600 text-[10px] mt-6 font-mono tracking-[0.2em] uppercase italic">Secure Protocol Enabled / Hua Nan Futures Data Lab</p>
+                            </div>
+                        </form>
+
+                        <footer className="mt-8 py-8 text-center border-t border-white/5 opacity-50">
+                            <p className="text-[10px] text-gray-700 font-black tracking-[0.4em] uppercase italic">HUA NAN FUTURES / Data War Room v25.0 Final</p>
+                        </footer>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+
+    <script>
+        const canvas = document.getElementById('neuronCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 設定畫布大小
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let particlesArray;
+
+        // V25 參數微調 (戰情室專用)
+        const numberOfParticles = (canvas.width * canvas.height) / 9000; // 動態計算數量，保持密度一致
+        const connectionDistance = 160; // 連線距離加大，讓線條更長
+        const particleSpeed = 1.5; // 速度稍慢一點點，更有質感
+
+        // 配色 (Cyan + Red)
+        const colors = ['#22d3ee', '#ef4444']; 
+
+        // 滑鼠位置物件
+        let mouse = {
+            x: null,
+            y: null,
+            radius: 150 
+        }
+
+        // 監聽滑鼠移動
+        window.addEventListener('mousemove', function(event) {
+            mouse.x = event.x;
+            mouse.y = event.y;
+        });
+
+        // 粒子類別 (移植版)
+        class Particle {
+            constructor(x, y, directionX, directionY, size, color) {
+                this.x = x;
+                this.y = y;
+                this.directionX = directionX;
+                this.directionY = directionY;
+                this.size = size;
+                this.color = color;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+
+            update() {
+                // 邊界反彈
+                if (this.x > canvas.width || this.x < 0) {
+                    this.directionX = -this.directionX;
+                }
+                if (this.y > canvas.height || this.y < 0) {
+                    this.directionY = -this.directionY;
+                }
+
+                // 滑鼠互動
+                let dx = mouse.x - this.x;
+                let dy = mouse.y - this.y;
+                let distance = Math.sqrt(dx*dx + dy*dy);
+                
+                if (distance < mouse.radius) {
+                    if (this.size < 5) {
+                        this.size += 1;
+                    }
+                } else if (this.size > 2) {
+                    this.size -= 1;
+                }
+
+                this.x += this.directionX;
+                this.y += this.directionY;
+
+                this.draw();
+            }
+        }
+
+        function init() {
+            particlesArray = [];
+            for (let i = 0; i < numberOfParticles; i++) {
+                let size = (Math.random() * 3) + 1;
+                let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
+                let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
+                let directionX = (Math.random() * particleSpeed) - (particleSpeed / 2);
+                let directionY = (Math.random() * particleSpeed) - (particleSpeed / 2);
+                
+                // 隨機選色 (大部分青色，少部分紅色)
+                let color = Math.random() > 0.1 ? '#22d3ee' : '#ef4444';
+
+                particlesArray.push(new Particle(x, y, directionX, directionY, size, color));
+            }
+        }
+
+        function connect() {
+            let opacityValue = 1;
+            for (let a = 0; a < particlesArray.length; a++) {
+                for (let b = a; b < particlesArray.length; b++) {
+                    let distance = ((particlesArray[a].x - particlesArray[b].x) * (particlesArray[a].x - particlesArray[b].x))
+                                 + ((particlesArray[a].y - particlesArray[b].y) * (particlesArray[a].y - particlesArray[b].y));
+                    
+                    if (distance < (connectionDistance * connectionDistance)) {
+                        opacityValue = 1 - (distance / 25000); 
+                        // 線條使用青色，透明度隨距離變化
+                        ctx.strokeStyle = 'rgba(34, 211, 238,' + opacityValue + ')';
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
+                        ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.clearRect(0, 0, innerWidth, innerHeight);
+
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update();
+            }
+            connect();
+        }
+
+        window.addEventListener('resize', function() {
+            canvas.width = innerWidth;
+            canvas.height = innerHeight;
+            mouse.radius = ((canvas.height/80) * (canvas.height/80));
+            init();
+        });
+
+        window.addEventListener('mouseout', function(){
+            mouse.x = undefined;
+            mouse.y = undefined;
+        });
+
+        init();
+        animate();
+    </script>
+</body>
+</html>
