@@ -3,24 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    <title>【期貨AI數據戰情室】講座報名表</title>
-    <meta property="og:title" content="【期貨AI數據戰情室】講座報名表" />
-    <meta property="og:description" content="量化交易 / 特徵提取 / 風控思維 - 立即報名分享會 (由楊恭臨主講)" />
-    <meta property="og:type" content="website" />
-    
-    <script>
-      window.onerror = function(msg, url, line) {
-        var d = document.getElementById('debug-box');
-        if(d) { d.style.display = 'block'; d.innerHTML += "⚠️ " + msg + "<br>"; }
-      };
-    </script>
-
+    <title>【期貨AI數據戰情室】分享會報名表</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <style>
         @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
         .animate-scan { animation: scan 2s linear infinite; }
@@ -29,46 +16,53 @@
         ::-webkit-scrollbar-track { background: #05070a; }
         ::-webkit-scrollbar-thumb { background: #22d3ee30; border-radius: 10px; }
         #debug-box { display: none; background: white; color: red; padding: 10px; position: fixed; top: 0; left: 0; width: 100%; z-index: 9999; }
-        
-        #neuronCanvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0; 
-            pointer-events: none;
-            opacity: 0.8;
-        }
+        #neuronCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.8; }
+        select { -webkit-appearance: none; appearance: none; }
+        .animate-fade-in { animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        * { -webkit-tap-highlight-color: transparent; }
     </style>
 </head>
 <body class="bg-[#05070a] text-gray-100 font-sans antialiased">
-
     <canvas id="neuronCanvas"></canvas>
-
     <div id="debug-box"></div>
     <div id="root" class="relative z-10"></div>
 
     <script type="text/babel">
         const { useState } = React;
 
-        // 👇 這裡就是您的新 API 鑰匙 (已填入完成) 👇
-        const API_URL = "https://script.google.com/macros/s/AKfycbwe3_YJtWJQX5flnNBJ_wX2x3tGTPNXpKm0RZSEO9rgIYrGvYtPXiyTaxOPNOyuShGB/exec";
+        // ✅ 正式部署網址
+        const API_URL = "https://script.google.com/macros/s/AKfycbwJSSJYT2U1awmqFlfFyDN4AYcF7j3DBbqOkhed2khhpmSzxy3GrTy8Bw62x2t7vZCW/exec";
 
         const UI_OPTIONS = {
             tradeCount: [
                 { val: "trade_1", label: "是的，我於任一券商近半年期權月均交易口數達 10 口以上" },
-                { val: "trade_2", label: "目前尚未達到，但對金融科技有強烈學習熱誠" }
+                { val: "trade_2", label: "目前尚未達 10 口以上，但對金融科技有強烈學習熱誠" }
             ],
             interests: [
-                { val: "int_1", label: "AI 特徵提取邏輯" },
-                { val: "int_2", label: "動能雷達應用" },
-                { val: "int_3", label: "走勢斜率與盤整過濾技術" },
-                { val: "int_4", label: "低延遲金融數據視覺化看板打造" }
+                { val: "int_1", label: "機器學習特徵提取邏輯" },
+                { val: "int_2", label: "多空動能趨式雷達應用" },
+                { val: "int_3", label: "斜率與過濾盤整盤方法" },
+                { val: "int_4", label: "低延遲數據資料視覺化" },
+                { val: "int_other", label: "其他 (請於下方填寫)" }
             ],
             computer: [
-                { val: "comp_1", label: "可以，我會自備電腦與網路" },
-                { val: "comp_2", label: "不方便，需再與您討論" }
+                { val: "comp_1", label: "會，我會攜帶電腦與網路" },
+                { val: "comp_2", label: "不會" }
+            ],
+            area: [
+                { val: "area_n", label: "北部區域" },
+                { val: "area_c", label: "中部區域" },
+                { val: "area_s", label: "南部區域" },
+                { val: "area_e", label: "東部區域" },
+                { val: "area_o", label: "離島" }
+            ],
+            age: [
+                { val: "age_1", label: "20以下" },
+                { val: "age_2", label: "20~35" },
+                { val: "age_3", label: "35~50" },
+                { val: "age_4", label: "50~65" },
+                { val: "age_5", label: "65以上" }
             ]
         };
 
@@ -91,10 +85,9 @@
         const App = () => {
             const [status, setStatus] = useState("idle");
             const [errorMsg, setErrorMsg] = useState("");
-            
             const [formData, setFormData] = useState({
-                name: "", phone: "", software: "",
-                tradeCount: "", interests: [], computer: "", agree: ""
+                name: "", phone: "", line: "", email: "", area: "", age: "", software: "",
+                tradeCount: "", interests: [], interestOtherText: "", computer: "", agree: ""
             });
 
             const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -115,39 +108,28 @@
                 setStatus("submitting");
                 setErrorMsg("");
 
-                if (!formData.name || !formData.phone || !formData.software) {
-                    setStatus("error"); setErrorMsg("請填寫完整基本資料"); window.scrollTo(0, 0); return;
+                if (!formData.name || !formData.phone || !formData.line || !formData.email || !formData.area || !formData.age || !formData.software) {
+                    setStatus("error"); setErrorMsg("請填寫完整基本資料 (包含年齡與 Email)"); window.scrollTo(0, 0); return;
                 }
-                if (!formData.tradeCount) {
-                    setStatus("error"); setErrorMsg("請選擇交易經驗"); return;
+                if (!formData.tradeCount || formData.interests.length === 0 || !formData.computer || !formData.agree) {
+                    setStatus("error"); setErrorMsg("請完成下方勾選項目"); return;
                 }
-                if (formData.interests.length === 0) {
-                    setStatus("error"); setErrorMsg("請至少選擇一項主題"); return;
-                }
-                if (!formData.computer) {
-                    setStatus("error"); setErrorMsg("請確認自備電腦"); return;
-                }
-                if (!formData.agree) {
-                    setStatus("error"); setErrorMsg("請勾選同意聲明"); return;
+                if (formData.interests.includes("int_other") && !formData.interestOtherText.trim()) {
+                    setStatus("error"); setErrorMsg("請輸入「其他」感興趣的主題內容"); return;
                 }
 
-                // 👇 使用新的 API 進行傳送
                 fetch(API_URL, {
                     method: "POST",
                     body: JSON.stringify(formData)
                 })
                 .then(response => response.json())
                 .then(res => {
-                    if (res.success) {
-                        setStatus("success");
-                    } else {
-                        setStatus("error");
-                        setErrorMsg(res.msg);
-                    }
+                    if (res.success) setStatus("success");
+                    else { setStatus("error"); setErrorMsg(res.msg); }
                 })
                 .catch(err => {
                     setStatus("error");
-                    setErrorMsg("連線失敗，請檢查網路或稍後再試。(" + err + ")");
+                    setErrorMsg("連線失敗：" + err.toString());
                 });
             };
 
@@ -173,44 +155,147 @@
 
             return (
                 <div className="min-h-screen pb-24 overflow-x-hidden selection:bg-cyan-500/30 text-left">
-                    <div className="relative z-10 max-w-4xl mx-auto px-4 pt-6 text-left">
-                        <header className="relative mb-8 rounded-3xl overflow-hidden border-2 border-cyan-500/50 bg-[#0d1117]/80 shadow-xl backdrop-blur-sm">
-                            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-cyan-500 via-white to-red-500 shadow-[0_0_15px_rgba(34,211,238,0.5)]"></div>
-                            <div className="p-6 md:p-12">
-                                <div className="flex items-center gap-2 text-cyan-400 font-black text-xs mb-4 tracking-[0.2em]">
-                                    <div className="w-2 h-2 bg-cyan-500 animate-pulse rounded-full"></div>
-                                    TRADING COPILOT / 量化交易系統
+                    <div className="relative z-10 max-w-4xl mx-auto px-4 pt-6 text-left">      
+
+                        <header className="relative mb-8 rounded-3xl overflow-hidden border-2 border-cyan-500/50 bg-[#0d1117]/80 shadow-xl backdrop-blur-sm p-6 md:p-12 text-left">
+                          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-cyan-500 via-white to-red-500 shadow-[0_0_15px_rgba(34,211,238,0.5)]"></div>
+                          
+                          <div className="flex items-center gap-2 text-cyan-400 font-black text-[10px] md:text-xs mb-5 tracking-[0.2em] md:tracking-[0.3em] uppercase">
+                            <div className="w-2 h-2 bg-cyan-500 animate-pulse rounded-full shadow-[0_0_8px_#22d3ee]"></div>
+                            Collaboration / 期貨人機協作分享會
+                          </div>
+
+                          <h1 className="text-3xl md:text-6xl font-black text-white mb-6 leading-tight tracking-tighter break-keep">
+                            【別再盯著K線猜主力】
+                          </h1>
+
+                          <div className="space-y-8 mb-8 text-left">
+                            <div className="flex items-start gap-3 md:gap-4">
+                              <div className="mt-1.5 p-1.5 md:p-2 bg-cyan-500/20 rounded-lg shrink-0 border border-cyan-500/30">
+                                <Icons.Cpu size={24} color="#22d3ee" className="md:w-7 md:h-7" />
+                              </div>
+
+                              <div className="space-y-4 overflow-hidden w-full">
+                                
+                                <p className="text-[4.8vw] md:text-xl text-white font-black leading-relaxed italic">
+                                  <span className="md:inline">
+                                    別讓你的看盤技術輸給了市場的迷霧，
+                                    <span className="text-cyan-400 underline decoration-2 md:decoration-4 underline-offset-4 md:underline-offset-8">
+                                      掀開 K線看不清的籌碼真相！
+                                    </span>
+                                  </span>
+                                </p>
+                                
+                                <div className="bg-white/5 border-l-2 border-cyan-500/50 p-4 rounded-r-xl my-6 space-y-3 shadow-[0_0_15px_rgba(0,0,0,0.3)]">
+                                  <p className="text-base md:text-base text-gray-300 flex items-center gap-2 font-bold">
+                                    <span className="text-sm">🥊</span> 還在盯K棒猜主力意圖？
+                                  </p>
+                                  <p className="text-base md:text-base text-gray-300 flex items-center gap-2 font-bold">
+                                    <span className="text-sm">🥊</span> 看盤工具無法看清動能？
+                                  </p>
+                                  <p className="text-base md:text-base text-gray-300 flex items-center gap-2 font-bold">
+                                    <span className="text-sm">🥊</span> 還在為寫程式熬夜除錯？
+                                  </p>
                                 </div>
-                                <h1 className="text-3xl md:text-5xl font-black text-white mb-6 leading-tight tracking-tighter break-keep">
-                                    【期貨AI數據戰情室】<br className="md:hidden"/>講座報名表
-                                </h1>
-                                <div className="space-y-6 mb-8 text-left">
-                                    <div className="flex items-start gap-4">
-                                        <div className="mt-1 p-1 bg-cyan-500/20 rounded shrink-0">
-                                            <Icons.Cpu size={24} color="#22d3ee" />
+
+                                <div className="mb-12 pl-4 md:pl-6 border-l border-dashed border-gray-600/50">
+                                  <p className="text-xl md:text-3xl text-cyan-400 font-black italic tracking-wider leading-snug drop-shadow-md mb-8">
+                                    「人生就像走勢圖！<br class="md:hidden" />別讓情緒模糊了視野！」
+                                  </p>
+                                  
+                                  {/* ✅ 修正處：這裡恢復為原本的價值主張說明 */}
+                                  <div className="mb-8">
+                                    <p className="text-base md:text-lg text-gray-300 leading-relaxed font-medium italic pl-1">
+                                      本次 <span className="text-red-400 font-extrabold not-italic">不談預測</span>，
+                                      而是帶您看案例中的特徵是如何優化決策流程，輔助您拼上這最後一塊科技拼圖，
+                                      <span className="text-cyan-400 underline decoration-2 md:decoration-4 underline-offset-4 md:underline-offset-8">
+                                        抓出期貨落後的關鍵！
+                                      </span>
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-3 mb-6 mt-10">
+                                    <div className="h-px w-8 bg-cyan-500 shadow-[0_0_5px_#22d3ee]"></div>
+                                    <span className="text-[10px] md:text-xs text-cyan-400 font-black tracking-[0.2em] uppercase border border-cyan-500/30 px-2 py-1 rounded bg-cyan-950/50 backdrop-blur-sm">
+                                        SPEAKER  / 講者介紹
+                                    </span>
+                                    <div className="h-px flex-grow bg-gradient-to-r from-cyan-500/50 to-transparent"></div>
+                                </div>
+
+                                <p className="text-lg md:text-lg text-gray-400 leading-relaxed font-medium italic pl-1">
+                                  我是 <span className="text-white font-black text-lg not-italic">楊恭臨</span>，一位專注於金融科技與量化交易的創作者。
+                                  帶您認識量能特徵建立的客觀風控思維，我相信
+                                  <span className="text-cyan-400 italic font-bold">
+                                    透過不同的看盤方法能有效追蹤行情變化及強化交易風控能力。
+                                  </span>
+                                </p>
+
+                                <div className="mt-10 p-6 md:p-10 bg-gradient-to-br from-cyan-950/40 to-black/60 border border-cyan-500/30 rounded-3xl shadow-[0_0_30px_rgba(34,211,238,0.1)]">
+                                  <div className="mb-6 flex items-center gap-2 text-cyan-400 text-[10px] md:text-xs font-black tracking-[0.2em] uppercase">
+                                    <Icons.Activity size={16} /> Mission / 任務核心
+                                  </div>
+                                  <div className="space-y-8 text-left">
+                                      <h4 className="text-2xl md:text-4xl text-white font-black leading-tight italic">
+                                        最後一哩路：
+                                        <div className="mt-4 flex flex-wrap items-center gap-3 text-left italic">
+                                          <span className="text-gray-500 text-lg md:text-2xl font-bold">從</span>
+                                          <span className="px-3 py-1 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg italic animate-pulse text-xl md:text-3xl font-black">
+                                            「憑感覺」
+                                          </span>
+                                          <span className="text-gray-500 text-lg md:text-2xl font-bold">進化到</span>
+                                          <span className="px-3 py-1 bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 rounded-lg italic shadow-[0_0_15px_rgba(34,211,238,0.4)] text-xl md:text-3xl font-black">
+                                            「看證據」
+                                          </span>
                                         </div>
-                                        <p className="text-lg md:text-xl text-white font-bold leading-relaxed">
-                                            一位專注於金融科技與量化交易的創作者。帶你看<span className="text-cyan-400 underline decoration-2 underline-offset-4 font-black">數據特徵</span>，協助你在期貨市場建立客觀的風控思維。
-                                        </p>
+                                      </h4>
+                                      <p className="text-white text-lg md:text-lg text-gray-400 leading-relaxed font-medium italic">
+                                        您的交易心法是核心，
+                                        <span className="text-cyan-400 italic font-bold">
+                                          搭配您個人所學建立穩健交易體系！
+                                        </span>
+                                      </p>
+                                  </div>
+                                </div>
+
+                                <div className="mt-10 p-6 md:p-10 bg-[#0d1117]/60 border border-gray-700/50 rounded-3xl relative overflow-hidden group hover:border-cyan-500/30 transition-all duration-500">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 blur-[50px] rounded-full pointer-events-none animate-pulse"></div>
+                                    <div className="mb-6 flex items-center gap-2 text-cyan-400 text-[10px] md:text-xs font-black tracking-[0.2em] uppercase">
+                                        <Icons.Cpu size={16} /> Strategy / 策略戰場
                                     </div>
-                                    <div className="bg-gradient-to-b from-[#1a1f26]/80 to-[#0d1117]/80 rounded-2xl border border-cyan-500/30 overflow-hidden shadow-2xl backdrop-blur-sm">
-                                        <div className="flex flex-col">
-                                            <div className="p-5 border-b border-white/5 flex flex-col gap-2 text-left">
-                                                <div className="flex items-center gap-2 text-cyan-400 text-[10px] font-black tracking-widest uppercase mb-1">
-                                                    <Icons.Mic size={14} color="#22d3ee" /> Lead Speaker / 主講人
-                                                </div>
-                                                <div className="text-2xl md:text-3xl font-black text-white tracking-wide min-h-[1.5em]">楊恭臨</div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="p-5 rounded-2xl bg-gradient-to-br from-cyan-950/30 to-black border border-cyan-500/20 shadow-[0_0_15px_rgba(34,211,238,0.05)]">
+                                            <div className="flex items-center gap-3 mb-3">
+                                                <span className="px-2 py-1 text-xs font-black bg-cyan-500 text-black rounded uppercase tracking-wider">
+                                                    DAY / 早盤
+                                                </span>
+                                                <div className="h-px flex-grow bg-cyan-500/30"></div>
                                             </div>
-                                            <div className="p-5 flex flex-col gap-2 bg-black/20 text-left">
-                                                <div className="flex items-center gap-2 text-red-400 text-[10px] font-black tracking-widest uppercase mb-1">
-                                                    <Icons.Book size={14} color="#f87171" /> Keynote Topic / 講座主題
-                                                </div>
-                                                <div className="text-xl md:text-2xl font-bold text-gray-100 leading-snug font-black italic">如何抓出期貨落後的關鍵資訊</div>
+                                            <p className="text-gray-300 font-bold text-base md:text-lg leading-relaxed">
+                                                輔助 <span className="text-white border-b-2 border-cyan-500 pb-0.5">台股</span> 及 <span className="text-white border-b-2 border-cyan-500 pb-0.5">台指期</span>
+                                            </p>
+                                            <p className="text-xs text-cyan-400/60 mt-2 font-mono tracking-widest">TWSE / TXF DATA LINKED</p>
+                                        </div>
+                                        <div className="p-5 rounded-2xl bg-gradient-to-br from-purple-950/30 to-black border border-purple-500/20 shadow-[0_0_15px_rgba(168,85,247,0.05)]">
+                                            <div className="flex items-center gap-3 mb-3">
+                                                <span className="px-2 py-1 text-xs font-black bg-purple-500 text-black rounded uppercase tracking-wider">
+                                                    NIGHT / 夜盤
+                                                </span>
+                                                <div className="h-px flex-grow bg-purple-500/30"></div>
                                             </div>
+                                            <p className="text-gray-300 font-bold text-base md:text-lg leading-relaxed">
+                                                輔助 <span className="text-white">美股複委託</span>、
+                                                <br className="md:hidden" />
+                                                <span className="text-white whitespace-nowrap">微/小型 那斯達克期及台指</span>
+                                            </p>
+                                            <p className="text-xs text-purple-400/60 mt-2 font-mono tracking-widest">NASDAQ / MICRO FUTURES</p>
                                         </div>
                                     </div>
                                 </div>
+
+                              </div>
                             </div>
+                          </div>
                         </header>
 
                         <section className="mb-10 group text-left">
@@ -223,87 +308,140 @@
                                             <div className="absolute -bottom-2 -left-2 w-4 h-4 border-b-2 border-l-2 border-cyan-400"></div>
                                             <div className="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-cyan-400"></div>
                                             <div className="absolute top-0 left-0 w-full h-1 bg-cyan-400/50 shadow-[0_0_10px_#22d3ee] animate-scan z-10 pointer-events-none"></div>
-                                            
                                             <img src="期貨戰情室Qrcode_.png" alt="QR Code" className="w-32 h-32 md:w-40 md:h-40 grayscale group-hover/qr:grayscale-0 transition-all duration-500 rounded-lg shadow-2xl" onError={handleImageError} />
                                         </div>
-                                        <div className="mt-4 flex items-center gap-2 text-cyan-400 font-black text-[10px] tracking-widest uppercase">
-                                            <Icons.Activity size={12} color="#22d3ee" className="animate-pulse" /> Live System Scan
-                                        </div>
+                                        <div className="mt-4 flex items-center gap-2 text-cyan-400 font-black text-[10px] tracking-widest uppercase text-center"><Icons.Activity size={12} color="#22d3ee" className="animate-pulse" /> Live System Scan</div>
                                     </div>
                                     <div className="w-full md:w-2/3 p-6 md:p-10 text-left">
-                                        <h3 className="text-xl md:text-2xl font-black text-white mb-4 leading-tight break-keep italic">
-                                            解鎖數據視野：我們先帶您看清 <span className="text-cyan-400 text-lg md:text-2xl font-black underline decoration-2 underline-offset-8">量化特徵實錄</span>
+                                        <h3 className="text-2xl md:text-3xl font-black text-white mb-8 leading-snug break-keep italic">
+                                            解鎖數據視野：
+                                            <br className="md:hidden" />
+                                            <span className="inline-flex items-center gap-2 mt-3 md:mt-2 px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-950/50 to-transparent border border-cyan-500/40 shadow-[0_0_20px_rgba(34,211,238,0.25)] backdrop-blur-md transform hover:scale-[1.02] transition-all duration-300 cursor-default group">
+                                            <Icons.Activity size={24} className="text-cyan-400 animate-pulse shrink-0 drop-shadow-[0_0_5px_rgba(34,211,238,0.8)]" />
+                                            <span className="text-cyan-300 italic font-black tracking-wide text-xl md:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-cyan-200 to-cyan-500">
+                                                帶您回顧量化特徵實錄
+                                            </span>
+                                            </span>
                                         </h3>
-                                        <p className="text-gray-400 text-sm md:text-base mb-6 font-bold leading-relaxed">
-                                            建立對數據的客觀信任是邁向<span className="text-white underline decoration-cyan-500 font-black">金融科技</span>的第一步。您可以透過下方按鈕或掃描左側，預覽特徵如何在歷史行情中觀察多空動能強弱。
+                                        <p className="text-base md:text-lg text-gray-300 leading-relaxed font-medium italic pl-1 mb-8">
+                                            建立對數據的客觀信任是邁向 
+                                            <span className="text-white font-black not-italic mx-1">金融科技</span> 
+                                            的第一步。您可以透過下方按鈕或掃描 QRcode！
                                         </p>
-                                        <a href="http://youtube.com/@FuturesAI_Live?sub_confirmation=1" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-3 bg-red-600 hover:bg-red-500 text-white font-black py-4 px-8 rounded-2xl transition-all shadow-lg active:scale-95 text-lg w-full md:w-auto justify-center">
-                                            <Icons.PlayCircle size={24} color="#fff" /> 點我進入預覽實錄
+                                        <a href="http://youtube.com/@FuturesAI_Live?sub_confirmation=1" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-3 bg-red-600 hover:bg-red-500 text-white font-black py-4 px-8 rounded-2xl transition-all shadow-[0_0_20px_rgba(220,38,38,0.5)] active:scale-95 text-lg w-full md:w-auto justify-center group">
+                                            <Icons.PlayCircle size={24} color="#fff" className="group-hover:scale-110 transition-transform" /> 
+                                            點我進入預覽實錄
                                         </a>
                                     </div>
                                 </div>
                             </div>
                         </section>
 
-                        <form onSubmit={handleSubmit} className="space-y-8 text-left">
-                            <section className="bg-[#0d1117]/90 border border-white/10 rounded-3xl p-6 md:p-10 shadow-lg text-left backdrop-blur-sm">
+                        <form onSubmit={handleSubmit} className="space-y-8 text-left animate-fade-in" style={{animationDelay: '0.2s'}}>
+                            <section className="bg-[#0d1117]/80 border border-cyan-500/20 rounded-3xl p-6 md:p-10 shadow-lg text-left backdrop-blur-md transition-all hover:border-cyan-500/40">
                                 <div className="flex items-center gap-3 mb-8 border-b border-cyan-500/20 pb-5 uppercase">
-                                    <Icons.User size={24} color="#22d3ee" /><h3 className="text-xl md:text-2xl font-black text-white tracking-widest">基本聯絡資料</h3>
+                                    <Icons.User size={24} color="#22d3ee" /><h3 className="text-xl md:text-2xl font-black text-white tracking-widest">報名聯絡資料</h3>
                                 </div>
                                 <div className="space-y-6">
                                     <div className="grid md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <label className="text-base font-black text-cyan-400 block ml-1 uppercase">您的姓名 *</label>
-                                            <input type="text" name="name" onChange={handleChange} placeholder="請輸入填寫者姓名" className="w-full h-14 bg-black border-2 border-gray-800 rounded-xl px-4 outline-none focus:border-cyan-400 text-white text-lg font-bold transition-all shadow-inner" />
+                                            <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="請輸入姓名" className="w-full h-14 bg-black/60 border-2 border-gray-700/50 rounded-xl px-4 outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(34,211,238,0.2)] text-white text-lg font-bold transition-all shadow-inner placeholder-gray-600" />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-base font-black text-cyan-400 block ml-1 uppercase">手機或 Line ID *</label>
-                                            <input type="text" name="phone" onChange={handleChange} placeholder="方便後續聯絡" className="w-full h-14 bg-black border-2 border-gray-800 rounded-xl px-4 outline-none focus:border-cyan-400 text-white text-lg font-bold transition-all shadow-inner" />
+                                            <label className="text-base font-black text-cyan-400 block ml-1 uppercase">手機號碼 *</label>
+                                            <input type="text" name="phone" value={formData.phone} onChange={handleChange} placeholder="0912345678" className="w-full h-14 bg-black/60 border-2 border-gray-700/50 rounded-xl px-4 outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(34,211,238,0.2)] text-white text-lg font-bold transition-all shadow-inner placeholder-gray-600" />
                                         </div>
                                     </div>
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-base font-black text-cyan-400 block ml-1 uppercase">LINE ID *</label>
+                                            <input type="text" name="line" value={formData.line} onChange={handleChange} placeholder="請輸入 LINE ID" className="w-full h-14 bg-black/60 border-2 border-gray-700/50 rounded-xl px-4 outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(34,211,238,0.2)] text-white text-lg font-bold transition-all shadow-inner placeholder-gray-600" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-base font-black text-cyan-400 block ml-1 uppercase">電子郵件 Email *</label>
+                                            <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="example@mail.com" className="w-full h-14 bg-black/60 border-2 border-gray-700/50 rounded-xl px-4 outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(34,211,238,0.2)] text-white text-lg font-bold transition-all shadow-inner placeholder-gray-600" />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-base font-black text-cyan-400 block ml-1 uppercase">通訊區域 *</label>
+                                        <div className="relative">
+                                            <select name="area" value={formData.area} onChange={handleChange} className="w-full h-14 bg-black/60 border-2 border-gray-700/50 rounded-xl px-4 outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(34,211,238,0.2)] text-white text-lg font-bold transition-all cursor-pointer appearance-none">
+                                                <option value="" disabled>請選擇您的區域</option>
+                                                {UI_OPTIONS.area.map(opt => <option key={opt.val} value={opt.val} className="bg-gray-900">{opt.label}</option>)}
+                                            </select>
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-cyan-400">▼</div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-base font-black text-cyan-400 block ml-1 uppercase">您的年齡區間 *</label>
+                                        <div className="relative">
+                                            <select name="age" value={formData.age} onChange={handleChange} className="w-full h-14 bg-black/60 border-2 border-gray-700/50 rounded-xl px-4 outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(34,211,238,0.2)] text-white text-lg font-bold transition-all cursor-pointer appearance-none">
+                                                <option value="" disabled>請選擇年齡區間</option>
+                                                {UI_OPTIONS.age.map(opt => <option key={opt.val} value={opt.val} className="bg-gray-900">{opt.label}</option>)}
+                                            </select>
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-cyan-400">▼</div>
+                                        </div>
+                                    </div>
+
                                     <div className="space-y-2 text-left">
                                         <label className="text-base font-black text-cyan-400 block ml-1 uppercase">目前慣用的看盤軟體 *</label>
-                                        <input type="text" name="software" onChange={handleChange} placeholder="例如：三竹、XQ、TradingView..." className="w-full h-14 bg-black border-2 border-gray-800 rounded-xl px-4 outline-none focus:border-cyan-400 text-white text-lg font-bold transition-all shadow-inner" />
+                                        <input type="text" name="software" value={formData.software} onChange={handleChange} placeholder="例如：三竹、XQ..." className="w-full h-14 bg-black/60 border-2 border-gray-700/50 rounded-xl px-4 outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(34,211,238,0.2)] text-white text-lg font-bold transition-all shadow-inner placeholder-gray-600" />
                                     </div>
                                 </div>
                             </section>
-                            <section className="bg-[#0d1117]/90 border border-white/10 rounded-3xl p-6 md:p-10 shadow-lg text-left backdrop-blur-sm">
+
+                            <section className="bg-[#0d1117]/80 border border-cyan-500/20 rounded-3xl p-6 md:p-10 shadow-lg text-left backdrop-blur-md transition-all hover:border-cyan-500/40">
                                 <div className="flex items-center gap-3 mb-8 border-b border-red-500/20 pb-5 uppercase">
                                     <Icons.Activity size={24} color="#f87171" /><h3 className="text-xl md:text-2xl font-black text-white tracking-widest uppercase break-keep leading-tight">交易經驗與主題</h3>
                                 </div>
                                 <div className="space-y-8">
                                     <div className="space-y-4">
-                                        <p className="text-base font-black text-white bg-red-900/20 px-3 py-2 rounded-lg inline-block border-l-4 border-red-500 uppercase tracking-widest font-black">交易口數確認 *</p>
+                                        <p className="text-base font-black text-white bg-red-900/20 px-3 py-2 rounded-lg inline-block border-l-4 border-red-500 uppercase tracking-widest">報名資格確認 *</p>
                                         <div className="grid gap-3">
                                             {UI_OPTIONS.tradeCount.map((opt) => (
-                                                <label key={opt.val} className="flex items-start gap-4 p-5 bg-black border-2 border-gray-800 rounded-2xl hover:border-red-500 cursor-pointer transition-all active:scale-[0.98]">
+                                                <label key={opt.val} className="flex items-start gap-4 p-5 bg-black/40 border-2 border-gray-800 rounded-2xl hover:border-red-500 cursor-pointer transition-all active:scale-[0.98] group">
                                                     <input type="radio" name="tradeCount" value={opt.val} checked={formData.tradeCount === opt.val} onChange={handleChange} className="mt-1 w-6 h-6 shrink-0 accent-red-500" />
-                                                    <span className="text-base font-bold text-gray-200 leading-snug">{opt.label}</span>
+                                                    <span className="text-base font-bold text-gray-300 group-hover:text-white leading-snug">{opt.label}</span>
                                                 </label>
                                             ))}
                                         </div>
                                     </div>
                                     <div className="space-y-4">
-                                        <p className="text-base font-black text-white bg-cyan-900/20 px-3 py-2 rounded-lg inline-block border-l-4 border-cyan-500 uppercase font-black tracking-widest">感興趣主題 (可多選)</p>
+                                        <p className="text-base font-black text-white bg-cyan-900/20 px-3 py-2 rounded-lg inline-block border-l-4 border-cyan-500 uppercase tracking-widest">感興趣主題 (可多選) *</p>
                                         <div className="grid gap-3">
                                             {UI_OPTIONS.interests.map((topic) => (
-                                                <label key={topic.val} className="flex items-center gap-4 p-4 bg-black border-2 border-gray-800 rounded-xl hover:border-cyan-400 cursor-pointer transition-all">
-                                                    <input type="checkbox" checked={formData.interests.includes(topic.val)} onChange={() => handleInterestChange(topic.val)} className="w-6 h-6 shrink-0 accent-cyan-500" />
-                                                    <span className="text-base font-bold text-gray-200 leading-tight uppercase font-bold">{topic.label}</span>
-                                                </label>
+                                                <div key={topic.val} className="space-y-3">
+                                                    <label className="flex items-center gap-4 p-4 bg-black/40 border-2 border-gray-800 rounded-xl hover:border-cyan-400 cursor-pointer transition-all group">
+                                                        <input type="checkbox" checked={formData.interests.includes(topic.val)} onChange={() => handleInterestChange(topic.val)} className="w-6 h-6 shrink-0 accent-cyan-500" />
+                                                        <span className="text-base font-bold text-gray-300 group-hover:text-white uppercase">{topic.label}</span>
+                                                    </label>
+                                                    {topic.val === "int_other" && formData.interests.includes("int_other") && (
+                                                        <input 
+                                                            type="text" 
+                                                            name="interestOtherText" 
+                                                            value={formData.interestOtherText} 
+                                                            onChange={handleChange} 
+                                                            placeholder="請輸入您感興趣的其他主題..." 
+                                                            className="w-full h-14 bg-black/60 border-2 border-cyan-500 rounded-xl px-4 outline-none text-white font-bold animate-fade-in placeholder-gray-500" 
+                                                        />
+                                                    )}
+                                                </div>
                                             ))}
                                         </div>
                                     </div>
                                 </div>
                             </section>
-                            <section className="bg-[#0d1117]/90 border border-white/10 rounded-3xl p-6 md:p-10 shadow-lg text-left backdrop-blur-sm">
+
+                            <section className="bg-[#0d1117]/80 border border-cyan-500/20 rounded-3xl p-6 md:p-10 shadow-lg text-left backdrop-blur-md transition-all hover:border-cyan-500/40">
                                 <div className="space-y-4">
-                                    <p className="text-base font-black text-white mb-2 tracking-wider">若報名成功，您是否能自備電腦參與？ *</p>
+                                    <p className="text-base font-black text-white mb-2 tracking-wider">若報名成功，您是否會自備電腦參與？ *</p>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         {UI_OPTIONS.computer.map(opt => (
-                                            <label key={opt.val} className="flex items-center gap-4 p-4 bg-black border-2 border-gray-800 rounded-2xl cursor-pointer hover:border-cyan-400">
+                                            <label key={opt.val} className="flex items-center gap-4 p-4 bg-black/40 border-2 border-gray-800 rounded-2xl cursor-pointer hover:border-cyan-400 transition-all group">
                                                 <input type="radio" name="computer" value={opt.val} checked={formData.computer === opt.val} onChange={handleChange} className="w-6 h-6 shrink-0 accent-cyan-500" />
-                                                <span className="text-base font-bold text-gray-200 leading-tight tracking-wide">{opt.label}</span>
+                                                <span className="text-base font-bold text-gray-300 group-hover:text-white leading-tight tracking-wide">{opt.label}</span>
                                             </label>
                                         ))}
                                     </div>
@@ -311,45 +449,44 @@
                             </section>
 
                             {status === "error" && (
-                                <div className="bg-red-500/10 border border-red-500/50 text-red-400 p-4 rounded-xl text-center font-bold animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.2)]">
-                                    ⚠️ {errorMsg}
-                                </div>
+                                <div className="bg-red-500/10 border border-red-500/50 text-red-400 p-4 rounded-xl text-center font-bold animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.2)]">⚠️ {errorMsg}</div>
                             )}
 
-                            <div className="space-y-8 mt-12 text-left">
+                            <div className="space-y-8 mt-12 text-left animate-fade-in" style={{animationDelay: '0.4s'}}>
                                 <section className="bg-[#161b22]/90 border-2 border-cyan-500 rounded-3xl p-6 md:p-10 shadow-xl backdrop-blur-sm">
                                     <h4 className="text-cyan-400 text-xl font-black mb-8 flex items-center gap-3 uppercase italic tracking-tighter"><Icons.Laptop size={28} color="#22d3ee" className="shrink-0" /> 分享會資訊</h4>
                                     <div className="flex flex-col gap-6 font-bold">
                                         <div className="p-6 bg-black/60 rounded-2xl border-l-8 border-cyan-500 text-left">
-                                            <span className="text-cyan-500 text-xs font-black block mb-2 uppercase tracking-widest">地點 Location</span>
-                                            <p className="text-white text-xl md:text-2xl leading-tight">台北市 (詳細地址將於報名成功後通知)</p>
+                                            <span className="text-cyan-500 text-sm font-black block mb-2 uppercase tracking-widest">地點 Location</span>
+                                            <p className="text-white text-xl md:text-2xl leading-tight font-black italic">台北市 (詳細地址將於報名成功後通知)</p>
                                         </div>
                                         <div className="p-6 bg-black/60 rounded-2xl border-l-8 border-cyan-500 text-left">
-                                            <span className="text-cyan-500 text-xs font-black block mb-2 uppercase tracking-widest">預計時段 Schedule</span>
+                                            <span className="text-cyan-500 text-sm font-black block mb-2 uppercase tracking-widest">預計時段 Schedule</span>
                                             <p className="text-white text-xl md:text-2xl leading-tight font-black italic uppercase">平日 09:30 - 11:00 (早盤盤中)</p>
                                         </div>
                                     </div>
                                 </section>
+
                                 <section className="bg-[#1a0a0a]/90 border-2 border-red-500 rounded-3xl p-6 md:p-10 shadow-xl text-left backdrop-blur-sm">
                                     <div className="flex items-center gap-3 text-red-500 mb-8 border-b border-red-500/20 pb-4 uppercase">
                                         <Icons.Shield size={28} color="#ef4444" className="shrink-0" /><h4 className="text-xl md:text-2xl font-black tracking-tight leading-tight break-keep">重要聲明與風險提示</h4>
                                     </div>
                                     <div className="bg-black/80 p-5 md:p-8 rounded-2xl text-sm md:text-base leading-relaxed text-gray-200 font-bold space-y-6 shadow-inner text-left tracking-wide">
                                         <p>【公司資訊】華南期貨許可證照字號：112年金管期總字第007號。總公司：台北市民生東路四段54號3F之9 | 總機：02-2718-0000</p>
-                                        <p>【風險提示】期權交易具高槓桿風險，投資人需自行審慎評估，損益自負。本內容僅供學術交流，不代表任何投資建議。</p>
+                                        <p>【風險提示】期權交易具高槓桿風險，投資人需自行審慎評估，損益自負。</p>
                                         <p>【法律免責】數據顯示不應視為買賣依據。交易皆應量力而為，本人及華南期貨不承擔任何交易損失與法律責任。</p>
                                     </div>
                                     <div className="mt-8 text-left">
                                         <label className="flex items-start gap-5 p-6 bg-red-600/10 border-2 border-red-500 rounded-2xl cursor-pointer hover:bg-red-600/20 transition-all active:scale-[0.98] shadow-md">
                                             <input type="checkbox" checked={formData.agree === "agree_1"} onChange={handleAgreeChange} className="mt-1 w-8 h-8 shrink-0 accent-red-500" />
-                                            <span className="text-lg font-black text-white leading-tight">我已詳閱並同意上述聲明與風險提示</span>
+                                            <span className="text-lg font-black text-white leading-tight font-black italic">我已詳閱並同意上述聲明與風險提示</span>
                                         </label>
                                     </div>
                                 </section>
                             </div>
 
                             <div className="pt-8 pb-10">
-                                <button type="submit" disabled={status === "submitting"} className={`w-full h-20 md:h-24 rounded-3xl font-black text-2xl md:text-3xl tracking-widest transition-all active:scale-[0.96] shadow-[0_0_30px_rgba(220,38,38,0.4)] ${status === "submitting" ? 'bg-gray-700' : 'bg-gradient-to-r from-red-600 to-red-800 text-white border-b-4 border-red-900 uppercase italic'}`}>
+                                <button type="submit" disabled={status === "submitting"} className={`w-full h-20 md:h-24 rounded-3xl font-black text-2xl md:text-3xl tracking-widest transition-all active:scale-[0.96] shadow-[0_0_30px_rgba(220,38,38,0.4)] hover:shadow-[0_0_50px_rgba(220,38,38,0.6)] hover:-translate-y-1 ${status === "submitting" ? 'bg-gray-700' : 'bg-gradient-to-r from-red-600 to-red-800 text-white border-b-4 border-red-900 uppercase italic'}`}>
                                     {status === "submitting" ? "數據傳輸中..." : "立即提交報名"}
                                 </button>
                                 <p className="text-center text-gray-600 text-[10px] mt-6 font-mono tracking-[0.2em] uppercase italic">Secure Protocol Enabled / Hua Nan Futures Data Lab</p>
@@ -357,7 +494,7 @@
                         </form>
 
                         <footer className="mt-8 py-8 text-center border-t border-white/5 opacity-50">
-                            <p className="text-[10px] text-gray-700 font-black tracking-[0.4em] uppercase italic">HUA NAN FUTURES / Data War Room v26.0 (GitHub)</p>
+                            <p className="text-[10px] text-gray-700 font-black tracking-[0.4em] uppercase italic font-black italic">HUA NAN FUTURES / Data War Room v28.27 (GitHub)</p>
                         </footer>
                     </div>
                 </div>
@@ -371,113 +508,59 @@
     <script>
         const canvas = document.getElementById('neuronCanvas');
         const ctx = canvas.getContext('2d');
-        // 設定畫布大小為全螢幕
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-
         let particlesArray;
-
-        // V26 參數微調 (戰情室專用)
         const numberOfParticles = (canvas.width * canvas.height) / 9000;
         const connectionDistance = 160;
         const particleSpeed = 1.5;
-        const colors = ['#22d3ee', '#ef4444']; 
         let mouse = { x: null, y: null, radius: 150 }
-
-        window.addEventListener('mousemove', function(event) {
-            mouse.x = event.x;
-            mouse.y = event.y;
-        });
-
+        window.addEventListener('mousemove', function(event) { mouse.x = event.x; mouse.y = event.y; });
         class Particle {
-            constructor(x, y, directionX, directionY, size, color) {
-                this.x = x;
-                this.y = y;
-                this.directionX = directionX;
-                this.directionY = directionY;
-                this.size = size;
-                this.color = color;
+            constructor(x, y, dx, dy, size, color) {
+                this.x = x; this.y = y; this.dx = dx; this.dy = dy; this.size = size; this.color = color;
             }
             draw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
-                ctx.fillStyle = this.color;
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                ctx.fillStyle = this.color; ctx.fill();
             }
             update() {
-                if (this.x > canvas.width || this.x < 0) this.directionX = -this.directionX;
-                if (this.y > canvas.height || this.y < 0) this.directionY = -this.directionY;
-
-                let dx = mouse.x - this.x;
-                let dy = mouse.y - this.y;
-                let distance = Math.sqrt(dx*dx + dy*dy);
-                
-                if (distance < mouse.radius) {
-                    if (this.size < 5) this.size += 1;
-                } else if (this.size > 2) {
-                    this.size -= 1;
-                }
-                this.x += this.directionX;
-                this.y += this.directionY;
-                this.draw();
+                if (this.x > canvas.width || this.x < 0) this.dx = -this.dx;
+                if (this.y > canvas.height || this.y < 0) this.dy = -this.dy;
+                let d = Math.sqrt((mouse.x - this.x)**2 + (mouse.y - this.y)**2);
+                if (d < mouse.radius) { if (this.size < 5) this.size += 1; }
+                else if (this.size > 2) { this.size -= 1; }
+                this.x += this.dx; this.y += this.dy; this.draw();
             }
         }
-
         function init() {
             particlesArray = [];
             for (let i = 0; i < numberOfParticles; i++) {
                 let size = (Math.random() * 3) + 1;
                 let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
                 let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
-                let directionX = (Math.random() * particleSpeed) - (particleSpeed / 2);
-                let directionY = (Math.random() * particleSpeed) - (particleSpeed / 2);
-                let color = Math.random() > 0.1 ? '#22d3ee' : '#ef4444';
-                particlesArray.push(new Particle(x, y, directionX, directionY, size, color));
+                particlesArray.push(new Particle(x, y, (Math.random()-0.5)*particleSpeed, (Math.random()-0.5)*particleSpeed, size, Math.random() > 0.1 ? '#22d3ee' : '#ef4444'));
             }
         }
-
         function connect() {
-            let opacityValue = 1;
             for (let a = 0; a < particlesArray.length; a++) {
                 for (let b = a; b < particlesArray.length; b++) {
-                    let distance = ((particlesArray[a].x - particlesArray[b].x) * (particlesArray[a].x - particlesArray[b].x))
-                                 + ((particlesArray[a].y - particlesArray[b].y) * (particlesArray[a].y - particlesArray[b].y));
-                    if (distance < (connectionDistance * connectionDistance)) {
-                        opacityValue = 1 - (distance / 25000); 
-                        ctx.strokeStyle = 'rgba(34, 211, 238,' + opacityValue + ')';
-                        ctx.lineWidth = 1;
-                        ctx.beginPath();
+                    let d = ((particlesArray[a].x - particlesArray[b].x)**2) + ((particlesArray[a].y - particlesArray[b].y)**2);
+                    if (d < connectionDistance**2) {
+                        ctx.strokeStyle = `rgba(34, 211, 238, ${1 - d/connectionDistance**2})`;
+                        ctx.lineWidth = 1; ctx.beginPath();
                         ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
-                        ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
-                        ctx.stroke();
+                        ctx.lineTo(particlesArray[b].x, particlesArray[b].y); ctx.stroke();
                     }
                 }
             }
         }
-
         function animate() {
-            requestAnimationFrame(animate);
-            ctx.clearRect(0, 0, innerWidth, innerHeight);
-            for (let i = 0; i < particlesArray.length; i++) {
-                particlesArray[i].update();
-            }
-            connect();
+            requestAnimationFrame(animate); ctx.clearRect(0, 0, innerWidth, innerHeight);
+            particlesArray.forEach(p => p.update()); connect();
         }
-
-        window.addEventListener('resize', function() {
-            canvas.width = innerWidth;
-            canvas.height = innerHeight;
-            mouse.radius = ((canvas.height/80) * (canvas.height/80));
-            init();
-        });
-
-        window.addEventListener('mouseout', function(){
-            mouse.x = undefined;
-            mouse.y = undefined;
-        });
-
-        init();
-        animate();
+        window.addEventListener('resize', () => { canvas.width=innerWidth; canvas.height=innerHeight; init(); });
+        init(); animate();
     </script>
 </body>
 </html>
