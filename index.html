@@ -4,14 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>揭密主力籌碼</title>
-
-    <!-- ✅ LINE / Social OG 標籤 -->
-    <meta property="og:title" content="揭密主力籌碼-分享會" />
-    <meta property="og:description" content="掀開主力籌碼！帶您從「憑感覺」進化到「看證據」，抓出期貨落後的關鍵！" />
-    <meta property="og:url" content="https://work-futuresai.github.io/futures-ai-signup/" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://work-futuresai.github.io/futures-ai-signup/ogimage.png" />
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
@@ -38,6 +30,9 @@
 
     <script type="text/babel">
         const { useState } = React;
+
+        // ✅ 版號
+        const VERSION = "v28.27";
 
         // ✅ 正式部署網址
         const API_URL = "https://script.google.com/macros/s/AKfycbwJSSJYT2U1awmqFlfFyDN4AYcF7j3DBbqOkhed2khhpmSzxy3GrTy8Bw62x2t7vZCW/exec";
@@ -168,9 +163,12 @@
                         <header className="relative mb-8 rounded-3xl overflow-hidden border-2 border-cyan-500/50 bg-[#0d1117]/80 shadow-xl backdrop-blur-sm p-6 md:p-12 text-left">
                           <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-cyan-500 via-white to-red-500 shadow-[0_0_15px_rgba(34,211,238,0.5)]"></div>
                           
-                          <div className="flex items-center gap-2 text-cyan-400 font-black text-[10px] md:text-xs mb-5 tracking-[0.2em] md:tracking-[0.3em] uppercase">
-                            <div className="w-2 h-2 bg-cyan-500 animate-pulse rounded-full shadow-[0_0_8px_#22d3ee]"></div>
-                            Collaboration / 證券期貨籌碼揭密分享
+                          <div className="flex items-center justify-between text-cyan-400 font-black text-[10px] md:text-xs mb-5 tracking-[0.2em] md:tracking-[0.3em] uppercase">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-cyan-500 animate-pulse rounded-full shadow-[0_0_8px_#22d3ee]"></div>
+                              Collaboration / 證券期貨籌碼揭密分享
+                            </div>
+                            <span className="font-mono text-cyan-500/60">{VERSION}</span>
                           </div>
 
                           <h1 className="text-3xl md:text-6xl font-black text-white mb-6 leading-tight tracking-tighter break-keep">
@@ -500,7 +498,7 @@
                         </form>
 
                         <footer className="mt-8 py-8 text-center border-t border-white/5 opacity-50">
-                            <p className="text-[10px] text-gray-700 font-black tracking-[0.4em] uppercase italic font-black italic">HUA NAN FUTURES / Data War Room v28.27 (GitHub)</p>
+                            <p className="text-[10px] text-gray-700 font-black tracking-[0.4em] uppercase italic font-black italic">HUA NAN FUTURES / Data War Room {VERSION} (GitHub)</p>
                         </footer>
                     </div>
                 </div>
@@ -570,4 +568,3 @@
     </script>
 </body>
 </html>
-
