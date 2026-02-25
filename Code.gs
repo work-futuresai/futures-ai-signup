@@ -41,7 +41,7 @@ const MAPPING = {
 
 function doGet(e) {
   return HtmlService.createTemplateFromFile('index').evaluate()
-    .setTitle('免費分享主力籌碼真相')
+    .setTitle('實戰籌碼K線特訓')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
 }
@@ -123,3 +123,4 @@ function processFormSubmission(formData) {
     return { success: false, msg: "系統錯誤: " + error.toString() };
   }
 }
+
