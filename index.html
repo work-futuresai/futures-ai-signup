@@ -40,7 +40,7 @@
         const { useState } = React;
 
         // ✅ 版號
-        const VERSION = "v28.31";
+        const VERSION = "v28.32";
 
         // ✅ 正式部署網址
         const API_URL = "https://script.google.com/macros/s/AKfycbwJSSJYT2U1awmqFlfFyDN4AYcF7j3DBbqOkhed2khhpmSzxy3GrTy8Bw62x2t7vZCW/exec";
@@ -178,11 +178,9 @@
                             </div>
                             <span className="font-mono text-cyan-500/60">{VERSION}</span>
                           </div>
-
-                          <h1 className="text-4xl md:text-6xl font-black text-white mb-6 leading-tight tracking-tighter break-keep">
+                          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight tracking-tighter break-keep">
                             掀開籌碼真相！
                           </h1>
-
                           <div className="space-y-8 mb-8 text-left">
                             <div className="flex items-start gap-3 md:gap-4">
                               <div className="mt-1.5 p-1.5 md:p-2 bg-cyan-500/20 rounded-lg shrink-0 border border-cyan-500/30">
@@ -469,8 +467,15 @@
                                     <h4 className="text-cyan-400 text-xl font-black mb-8 flex items-center gap-3 uppercase italic tracking-tighter"><Icons.Laptop size={28} color="#22d3ee" className="shrink-0" /> 免費分享會資訊</h4>
                                     <div className="flex flex-col gap-6 font-bold">
                                         <div className="p-6 bg-black/60 rounded-2xl border-l-8 border-cyan-500 text-left">
-                                            <span className="text-cyan-500 text-sm font-black block mb-2 uppercase tracking-widest">地點</span>
-                                            <p className="text-white text-xl md:text-2xl leading-tight font-black italic">台北市松山區民生東路四段54號3F之9 (華南期貨總公司)</p>
+                                          <span className="text-cyan-500 text-sm font-black block mb-2 uppercase tracking-widest">
+                                            地點
+                                          </span>
+                                          <span className="px-3 py-1 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg italic animate-pulse text-xl md:text-3xl font-black mb-2 inline-block">
+                                            「華南期貨總公司」
+                                          </span>
+                                          <p className="text-white text-xl md:text-2xl leading-tight font-black italic">
+                                            台北市民生東路四段54號3F之9
+                                          </p>
                                         </div>
                                         <div className="p-6 bg-black/60 rounded-2xl border-l-8 border-cyan-500 text-left">
                                             <span className="text-cyan-500 text-sm font-black block mb-2 uppercase tracking-widest">時段 / 報名後LINE電話確認時段</span>
@@ -576,6 +581,7 @@
     </script>
 </body>
 </html>
+
 
 
 
